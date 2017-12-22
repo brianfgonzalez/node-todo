@@ -4,7 +4,7 @@ var bodyParser = require('body-parser')
 var {mongoose} = require('./db/mongoose')
 var {Todo} = require('./models/todo')
 var {User} = require('./models/user')
-var {ObjectID} = require('mongoDB')
+var {ObjectID} = require('mongodb')
 
 var app = express()
 const port = process.env.port || 3000
@@ -46,7 +46,7 @@ app.get('/todos/:todoid', (req, res) => {
 
   if (!ObjectID.isValid(id)) res.status(400).send('Todo id is not valid')
   Todo.findById(id).then((todo) => {
-    if (!todo) res.status(400).send('Todo is not found in mangoDB')
+    if (!todo) return res.status(400).send('Todo is not found in mangoDB')
     res.send({todo})
   }, (e) => {
     res.status(400).send(e)
