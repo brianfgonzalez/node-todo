@@ -1,7 +1,7 @@
 var mongoose = require('mongoose')
 // http://mongoosejs.com/docs/guide.html
 
-var uri = 'mongodb://localhost:27017/TodoApp'
+var uri = process.env.MONGODBURI || 'mongodb://localhost:27017/TodoApp'
 
 // Use bluebird
 mongoose.Promise = require('bluebird')

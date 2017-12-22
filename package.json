@@ -4,7 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "start": "node server/server.js",
     "test": "jest"
+  },
+  "engines": {
+    "node": "8.8.1"
   },
   "author": "",
   "license": "ISC",
