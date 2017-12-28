@@ -108,3 +108,37 @@ describe('GET /users/:id', () => {
       .end(done)
   })
 })
+
+describe('DELETE /todos/:id', () => {
+  it('should remove a specified todo', (done) => {
+    var id = todos[0]._id.toHexString()
+    request(app)
+      .delete(`/todos/${id}`)
+      .expect(200)
+      .expect((res) => {
+        expect(res.body.todo.text).toBe('First test todo')
+      })
+      .end((err, res) => {
+        if (err) return done(err)
+        Todo.findById(id).then((todo) => {
+          expect(todo).toBeNull()
+          done()
+        }).catch((err) => done(err))
+      })
+  })
+  it('should return 404 because todo was not found', (done) => {
+    request(app)
+      .delete(`/todos/${new ObjectID()}`)
+      .expect(404)
+      .end(done)
+  })
+  it('should return 404 because todo id was not valid', (done) => {
+    request(app)
+      .delete('/todos/notAValidId')
+      .expect(404)
+      .end(done)
+  })
+})
+
+//  case sensitive: variableABC = variableABC.replace(/B/g, "D");
+//  case insensitive: variableABC = variableABC.replace(/B/gi, "D");
