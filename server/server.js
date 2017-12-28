@@ -65,6 +65,20 @@ app.get('/users/:userid', (req, res) => {
   })
 })
 
+app.delete('/todos/:todoid', (req, res) => {
+  var id = req.params.todoid
+
+  if (!ObjectID.isValid(id)) res.status(400).send(`Passed todo id(${id}) is not valid`)
+  Todo.findByIdAndRemove(id).then((todo) => {
+    if (!todo) return res.status(404).send('Todo is not found in mongoDB')
+    res.send({todo})
+  }, (e) => res.status(400).send(e))
+  // validate id send 404
+  // remove todo by id
+  // success(if no doc send 404, id not found) or error(400, empty body)
+
+})
+
 app.listen(port, () => {
   console.log(`Started on port ${port}`)
 })
