@@ -36,7 +36,7 @@ app.post('/users', (req, res) => {
 app.get('/todos', (req, res) => {
   Todo.find().then((todos) => {
     res.send({todos})
-  }.catch((e) => res.status(400).send(e))
+  }).catch((e) => res.status(400).send(e))
 })
 
 app.get('/todos/:todoid', (req, res) => {
@@ -46,7 +46,7 @@ app.get('/todos/:todoid', (req, res) => {
   Todo.findById(id).then((todo) => {
     if (!todo) return res.status(400).send('Todo is not found in mangoDB')
     res.send({todo})
-  }.catch((e) => res.status(400).send(e))
+  }).catch((e) => res.status(400).send(e))
 })
 
 app.get('/users/:userid', (req, res) => {
