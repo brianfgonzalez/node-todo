@@ -30,17 +30,6 @@ app.post('/todos', (req, res) => {
     })
 })
 
-app.post('/users', (req, res) => {
-    var user = new User({
-      email: req.body.email
-    })
-    user.save().then((doc) => {
-      res.send(doc)
-    }, (e) => {
-      res.status(400).send(e)
-    })
-})
-
 app.get('/todos', (req, res) => {
   Todo.find().then((todos) => {
     res.send({todos})
@@ -98,6 +87,21 @@ app.patch('/todos/:todoid', (req, res) => {
   Todo.findByIdAndUpdate(id, {$set: body}, {new: true}).then((todo) => {
     if (!todo) return res.sendStatus(404)
     res.status(200).send({todo})
+  }).catch((e) => res.status(400).send(e))
+})
+
+// post /users
+app.post('/users', (req, res) => {
+  var user = new User(_.pick(req.body, ['email', 'password']))
+
+  // User = model method (i.e User.findByToken)
+  // user = instance method (i.e. user.generateAuthToken)
+
+  user.save().then(() => {
+    return user.generateAuthToken()
+  }).then((token) => {
+    res.header('x-auth', token).send(user)
+    // x- headers are custom ones
   }).catch((e) => res.status(400).send(e))
 })
 
