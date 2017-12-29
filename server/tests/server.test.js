@@ -140,5 +140,43 @@ describe('DELETE /todos/:id', () => {
   })
 })
 
+describe('UPDATE /todos/:id', () => {
+  it('should update an existing todo and set it to completed', (done) => {
+    var id = todos[0]._id.toHexString()
+    var text = 'New text content'
+    request(app)
+      .patch(`/todos/${id}`)
+      .send({
+        text,
+        completed: true
+      })
+      .expect(200)
+      .expect((res) => {
+        expect(typeof res.body.todo.completedAt).toBe('number')
+      })
+      .end((err, res) => {
+        if (err) return done(err)
+        Todo.findById(id).then((todo) => {
+          expect(todo.text).toBe(text)
+          expect(todo.completed).toBe(true)
+          done()
+        })
+      })
+  })
+  it('should set completed to false and clear completedAt', (done) => {
+    var id = todos[0]._id.toHexString()
+    request(app)
+      .patch(`/todos/${id}`)
+      .send({completed: false})
+      .expect(200)
+      .end((err, res) => {
+        Todo.findById(id).then((todo) => {
+          expect(todo.completedAt).toBeNull()
+          done()
+        }).catch((err) => done(err))
+      })
+  })
+})
+
 //  case sensitive: variableABC = variableABC.replace(/B/g, "D");
 //  case insensitive: variableABC = variableABC.replace(/B/gi, "D");

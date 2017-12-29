@@ -1,22 +1,30 @@
-var express = require('express')
-var bodyParser = require('body-parser')
+
+const _ = require('lodash')
+const express = require('express')
+const bodyParser = require('body-parser')
+const {ObjectID} = require('mongodb')
 
 var {mongoose} = require('./db/mongoose')
 var {Todo} = require('./models/todo')
 var {User} = require('./models/user')
-var {ObjectID} = require('mongodb')
 
 var app = express()
 const port = process.env.PORT || 3000
 
 app.use(bodyParser.json())
 
+
+//res.sendStatus(200); // equivalent to res.status(200).send('OK')
+// res.sendStatus(403); // equivalent to res.status(403).send('Forbidden')
+// res.sendStatus(404); // equivalent to res.status(404).send('Not Found')
+// res.sendStatus(500); // equivalent to res.status(500).send('Internal Server Error')
+
 app.post('/todos', (req, res) => {
     var todo = new Todo({
       text: req.body.text
     })
     todo.save().then((doc) => {
-      res.send(doc)
+      res.status(200).send(doc)
     }, (e) => {
       res.status(400).send(e)
     })
@@ -68,6 +76,28 @@ app.delete('/todos/:todoid', (req, res) => {
   Todo.findByIdAndRemove(id).then((todo) => {
     if (!todo) return res.status(404).send('Todo is not found in mongoDB')
     res.send({todo})
+  }).catch((e) => res.status(400).send(e))
+})
+
+app.patch('/todos/:todoid', (req, res) => {
+  var id = req.params.todoid
+  // pulls off only the properties we want
+  var body = _.pick(req.body, ['text', 'completed'])
+  if (!ObjectID.isValid(id)) return res.status(404).send(`Passed todo id "${id}" is not valid`)
+
+  if (_.isBoolean(body.completed) && body.completed) {
+    // is boolean and is true
+    body.completedAt = new Date().getTime()
+  } else {
+    // is not a boolean or not true
+    body.completed = false
+    body.completedAt = null
+    // setting value to null removes it from the mongoDB
+  }
+
+  Todo.findByIdAndUpdate(id, {$set: body}, {new: true}).then((todo) => {
+    if (!todo) return res.sendStatus(404)
+    res.status(200).send({todo})
   }).catch((e) => res.status(400).send(e))
 })
 
