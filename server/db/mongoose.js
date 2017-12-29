@@ -15,6 +15,9 @@ var options = {
   promiseLibrary: require('mpromise')
 };
 mongoose.Promise = global.Promise
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/TodoApp', options)
+mongoose.connect(process.env.MONGODB_URI, options)
 
 module.exports = {mongoose}
+
+
+process.env.NODE_ENV
