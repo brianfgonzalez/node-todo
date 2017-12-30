@@ -20,6 +20,7 @@ app.use(bodyParser.json())
 // res.sendStatus(404); // equivalent to res.status(404).send('Not Found')
 // res.sendStatus(500); // equivalent to res.status(500).send('Internal Server Error')
 
+// create todo
 app.post('/todos', (req, res) => {
     var todo = new Todo({
       text: req.body.text
@@ -31,17 +32,20 @@ app.post('/todos', (req, res) => {
     })
 })
 
+// who am i
 app.get('/users/me', authenticate, (req, res) => {
   res.send(req.user)
 })
 
-app.get('/todos', authenticate, (req, res) => {
+// get all todos
+app.get('/todos', (req, res) => {
   Todo.find().then((todos) => {
     res.send({todos})
   }).catch((e) => res.status(400).send(e))
 })
 
-app.get('/todos/:todoid', authenticate, (req, res) => {
+// get todo by id
+app.get('/todos/:todoid', (req, res) => {
   var id = req.params.todoid
 
   if (!ObjectID.isValid(id)) res.status(400).send('Todo id is not valid')
@@ -51,6 +55,7 @@ app.get('/todos/:todoid', authenticate, (req, res) => {
   }).catch((e) => res.status(400).send(e))
 })
 
+// get user by id
 app.get('/users/:userid', (req, res) => {
   var id = req.params.userid
 
@@ -63,7 +68,8 @@ app.get('/users/:userid', (req, res) => {
   })
 })
 
-app.delete('/todos/:todoid', authenticate, (req, res) => {
+// delete todo
+app.delete('/todos/:todoid', (req, res) => {
   var id = req.params.todoid
 
   if (!ObjectID.isValid(id)) return res.status(404).send(`Passed todo id "${id}" is not valid`)
@@ -73,7 +79,8 @@ app.delete('/todos/:todoid', authenticate, (req, res) => {
   }).catch((e) => res.status(400).send(e))
 })
 
-app.patch('/todos/:todoid', authenticate, (req, res) => {
+// update todo
+app.patch('/todos/:todoid', (req, res) => {
   var id = req.params.todoid
   // pulls off only the properties we want
   var body = _.pick(req.body, ['text', 'completed'])
