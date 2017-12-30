@@ -7,15 +7,16 @@ const {ObjectID} = require('mongodb')
 var {mongoose} = require('./db/mongoose')
 var {Todo} = require('./models/todo')
 var {User} = require('./models/user')
+var {authenticate} = require('./middleware/authenticate')
 
 var app = express()
 const port = process.env.PORT
 
 app.use(bodyParser.json())
 
-
 //res.sendStatus(200); // equivalent to res.status(200).send('OK')
 // res.sendStatus(403); // equivalent to res.status(403).send('Forbidden')
+// res.sendStatus(401); // equivalent to res.status(401).send('Unauthorized')
 // res.sendStatus(404); // equivalent to res.status(404).send('Not Found')
 // res.sendStatus(500); // equivalent to res.status(500).send('Internal Server Error')
 
@@ -30,13 +31,17 @@ app.post('/todos', (req, res) => {
     })
 })
 
-app.get('/todos', (req, res) => {
+app.get('/users/me', authenticate, (req, res) => {
+  res.send(req.user)
+})
+
+app.get('/todos', authenticate, (req, res) => {
   Todo.find().then((todos) => {
     res.send({todos})
   }).catch((e) => res.status(400).send(e))
 })
 
-app.get('/todos/:todoid', (req, res) => {
+app.get('/todos/:todoid', authenticate, (req, res) => {
   var id = req.params.todoid
 
   if (!ObjectID.isValid(id)) res.status(400).send('Todo id is not valid')
@@ -58,7 +63,7 @@ app.get('/users/:userid', (req, res) => {
   })
 })
 
-app.delete('/todos/:todoid', (req, res) => {
+app.delete('/todos/:todoid', authenticate, (req, res) => {
   var id = req.params.todoid
 
   if (!ObjectID.isValid(id)) return res.status(404).send(`Passed todo id "${id}" is not valid`)
@@ -68,7 +73,7 @@ app.delete('/todos/:todoid', (req, res) => {
   }).catch((e) => res.status(400).send(e))
 })
 
-app.patch('/todos/:todoid', (req, res) => {
+app.patch('/todos/:todoid', authenticate, (req, res) => {
   var id = req.params.todoid
   // pulls off only the properties we want
   var body = _.pick(req.body, ['text', 'completed'])
