@@ -46,9 +46,7 @@ app.post('/users/login', (req, res) => {
     user.generateAuthToken().then((token) => {
       res.header('x-auth', token).send(user)
     })
-  }).catch((e) => {
-    res.status(400).send(e)
-  })
+  }).catch((e) => res.status(401).send(e))
 })
 
 // get all todos
@@ -77,6 +75,15 @@ app.get('/users/:userid', (req, res) => {
   User.findById(id).then((user) => {
     if (!user) return res.status(400).send('User is not found in mangoDB')
     res.send({user})
+  }, (e) => {
+    res.status(400).send(e)
+  })
+})
+
+// delete user token for currently logged in user
+app.delete('/users/me/token', authenticate, (req, res) => {
+  req.user.removeToken(req.token).then(() => {
+    res.sendStatus(200)
   }, (e) => {
     res.status(400).send(e)
   })

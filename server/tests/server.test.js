@@ -122,7 +122,7 @@ describe('TODOS', () => {
             expect(todo.text).toBe(text)
             expect(todo.completed).toBe(true)
             done()
-          })
+          }).catch((err) => done(err))
         })
     })
     it('should set completed to false and clear completedAt', (done) => {
@@ -166,7 +166,7 @@ describe('USERS', () => {
             expect(user).toBeDefined()
             expect(user.password).not.toBe(password)
             done()
-          })
+          }).catch((e) => done(e))
         })
     })
 
@@ -240,6 +240,51 @@ describe('USERS', () => {
         .expect(401)
         .end(done)
     })
+  })
+
+  describe('POST /users/login', () => {
+    it('should login user and return auth token', (done) => {
+      request(app)
+        .post('/users/login')
+        .send({
+          email: users[1].email,
+          password: users[1].password
+        })
+        .expect(200)
+        .expect((res) => {
+          expect(res.headers['x-auth']).toBeDefined()
+        })
+        .end((err, res) => {
+          if (err) return done(err)
+
+          User.findById(users[1]._id).then((user) => {
+            expect(user.tokens[1].token).toBe(res.headers['x-auth'])
+            done()
+          }).catch((e) => done(e))
+        })
+    })
+
+    it('should reject invalid login', (done) => {
+      request(app)
+        .post('/users/login')
+        .send({
+          email: 'notAUser@example.com',
+          password: 'notAPassword'
+        })
+        .expect(401)
+        .expect((res) => {
+          expect(res.headers['x-auth']).not.toBeDefined()
+        })
+        .end((err, res) => {
+          if (err) return done(err)
+
+          User.findById(users[1]._id).then((user) => {
+            expect(user.tokens.length).toBe(1)
+            done()
+          }).catch((e) => done(e))
+        })
+    })
+
   })
 })
 //  case sensitive: variableABC = variableABC.replace(/B/g, "D");
