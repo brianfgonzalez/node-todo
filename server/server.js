@@ -21,10 +21,15 @@ app.use(bodyParser.json())
 // res.sendStatus(404); // equivalent to res.status(404).send('Not Found')
 // res.sendStatus(500); // equivalent to res.status(500).send('Internal Server Error')
 
-// create todo
-app.post('/todos', (req, res) => {
+app.get('/users/me', authenticate, (req, res) => {
+  res.send(req.user)
+})
+
+app.post('/todos', authenticate, (req, res) => {
+    //console.log(req.user)
     var todo = new Todo({
-      text: req.body.text
+      text: req.body.text,
+      _creator: req.user._id
     })
     todo.save().then((doc) => {
       res.status(200).send(doc)
@@ -33,75 +38,41 @@ app.post('/todos', (req, res) => {
     })
 })
 
-// who am i
-app.get('/users/me', authenticate, (req, res) => {
-  res.send(req.user)
-})
-
-// login with user using hashed password
-app.post('/users/login', (req, res) => {
-  var body = _.pick(req.body, ['email', 'password'])
-
-  User.findByCredentials(body.email, body.password).then((user) => {
-    user.generateAuthToken().then((token) => {
-      res.header('x-auth', token).send(user)
-    })
-  }).catch((e) => res.status(401).send(e))
-})
-
-// get all todos
-app.get('/todos', (req, res) => {
-  Todo.find().then((todos) => {
+app.get('/todos', authenticate, (req, res) => {
+  Todo.find({
+    _creator: req.user._id
+  }).then((todos) => {
     res.send({todos})
   }).catch((e) => res.status(400).send(e))
 })
 
-// get todo by id
-app.get('/todos/:todoid', (req, res) => {
+app.get('/todos/:todoid', authenticate, (req, res) => {
   var id = req.params.todoid
 
-  if (!ObjectID.isValid(id)) res.status(400).send('Todo id is not valid')
-  Todo.findById(id).then((todo) => {
-    if (!todo) return res.status(400).send('Todo is not found in mangoDB')
+  if (!ObjectID.isValid(id)) return res.status(404).send('Todo id is not valid')
+  Todo.findOne({
+    _id: id,
+    _creator: req.user._id
+  }).then((todo) => {
+    if (!todo) return res.status(404).send('Todo is not found in mangoDB')
     res.send({todo})
   }).catch((e) => res.status(400).send(e))
 })
 
-// get user by id
-app.get('/users/:userid', (req, res) => {
-  var id = req.params.userid
-
-  if (!ObjectID.isValid(id)) return res.status(400).send('User id is not valid')
-  User.findById(id).then((user) => {
-    if (!user) return res.status(400).send('User is not found in mangoDB')
-    res.send({user})
-  }, (e) => {
-    res.status(400).send(e)
-  })
-})
-
-// delete user token for currently logged in user
-app.delete('/users/me/token', authenticate, (req, res) => {
-  req.user.removeToken(req.token).then(() => {
-    res.sendStatus(200)
-  }, (e) => {
-    res.status(400).send(e)
-  })
-})
-
-// delete todo
-app.delete('/todos/:todoid', (req, res) => {
+app.delete('/todos/:todoid', authenticate, (req, res) => {
   var id = req.params.todoid
 
   if (!ObjectID.isValid(id)) return res.status(404).send(`Passed todo id "${id}" is not valid`)
-  Todo.findByIdAndRemove(id).then((todo) => {
+  Todo.findOneAndRemove({
+    _id: id,
+    _creator: req.user._id
+  }).then((todo) => {
     if (!todo) return res.status(404).send('Todo is not found in mongoDB')
     res.send({todo})
   }).catch((e) => res.status(400).send(e))
 })
 
-// update todo
-app.patch('/todos/:todoid', (req, res) => {
+app.patch('/todos/:todoid', authenticate, (req, res) => {
   var id = req.params.todoid
   // pulls off only the properties we want
   var body = _.pick(req.body, ['text', 'completed'])
@@ -117,13 +88,17 @@ app.patch('/todos/:todoid', (req, res) => {
     // setting value to null removes it from the mongoDB
   }
 
-  Todo.findByIdAndUpdate(id, {$set: body}, {new: true}).then((todo) => {
+  Todo.findOneAndUpdate({
+    _id: id,
+    _creator: req.user._id
+    },
+    {$set: body},{new: true}
+  ).then((todo) => {
     if (!todo) return res.sendStatus(404)
     res.status(200).send({todo})
   }).catch((e) => res.status(400).send(e))
 })
 
-// post /users
 app.post('/users', (req, res) => {
   var user = new User(_.pick(req.body, ['email', 'password']))
 
@@ -136,6 +111,36 @@ app.post('/users', (req, res) => {
     res.header('x-auth', token).send(user)
     // x- headers are custom ones
   }).catch((e) => res.status(400).send(e))
+})
+
+app.post('/users/login', (req, res) => {
+  var body = _.pick(req.body, ['email', 'password'])
+
+  User.findByCredentials(body.email, body.password).then((user) => {
+    user.generateAuthToken().then((token) => {
+      res.header('x-auth', token).send(user)
+    })
+  }).catch((e) => res.status(401).send(e))
+})
+
+app.get('/users/:userid', (req, res) => {
+  var id = req.params.userid
+
+  if (!ObjectID.isValid(id)) return res.status(400).send('User id is not valid')
+  User.findById(id).then((user) => {
+    if (!user) return res.status(400).send('User is not found in mangoDB')
+    res.send({user})
+  }, (e) => {
+    res.status(400).send(e)
+  })
+})
+
+app.delete('/users/me/token', authenticate, (req, res) => {
+  req.user.removeToken(req.token).then(() => {
+    res.sendStatus(200)
+  }, (e) => {
+    res.status(400).send(e)
+  })
 })
 
 app.listen(port, () => {

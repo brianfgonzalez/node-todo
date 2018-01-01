@@ -3,15 +3,22 @@ const {Todo} = require('./../../models/todo')
 const {User} = require('./../../models/user')
 const jwt = require('jsonwebtoken')
 
-const todos = [{
-  _id: new ObjectID(),
-  text:  'First test todo'
-}, {
-  _id: new ObjectID(),
-  text: 'Second test todo'
-}]
 const userOneId = new ObjectID()
 const userTwoId = new ObjectID()
+
+const todos = [{
+  _id: new ObjectID(),
+  text:  'First test todo for userOne',
+  _creator: userOneId
+}, {
+  _id: new ObjectID(),
+  text: 'First test todo for userTwo',
+  _creator: userTwoId
+}, {
+  _id: new ObjectID(),
+  text: 'Second test todo for userTwo',
+  _creator: userTwoId
+}]
 const users = [{
   _id: userOneId,
   email:  'firstEmail@aol.com',
